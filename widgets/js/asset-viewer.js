@@ -10,7 +10,16 @@ import { OrbitControls } from 'https://unpkg.com/three@0.152.2/examples/jsm/cont
  * @param {HTMLElement} container
  */
 function initAssetViewer(container) {
-    // Your existing initAssetViewer code remains unchanged
+    // Clean up any existing renderer and canvas to avoid multiple contexts
+    if (container._feebasAnimationId) {
+        cancelAnimationFrame(container._feebasAnimationId);
+        delete container._feebasAnimationId;
+    }
+    // Remove any previous canvas
+    const oldCanvas = container.querySelector('canvas');
+    if (oldCanvas) {
+        container.removeChild(oldCanvas);
+    }
     const assetUrl = container.getAttribute('data-asset-url');
     if (!assetUrl) {
         return;
@@ -23,13 +32,36 @@ function initAssetViewer(container) {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);
+    // Handle WebGL context loss/restoration
+    renderer.domElement.addEventListener('webglcontextlost', function(event) {
+        event.preventDefault();
+        console.error('WebGL context lost on Asset Viewer canvas');
+        if (container._feebasAnimationId) {
+            cancelAnimationFrame(container._feebasAnimationId);
+            delete container._feebasAnimationId;
+        }
+    }, false);
+    renderer.domElement.addEventListener('webglcontextrestored', function(event) {
+        console.log('WebGL context restored on Asset Viewer canvas');
+        animate();
+    }, false);
     // Add orbit controls for zoom and rotation
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.enableZoom = true;
     controls.enableRotate = true;
-    
+
+    // Zoom limits from attributes
+    const minZoomAttr = parseFloat(container.getAttribute('data-min-zoom'));
+    const maxZoomAttr = parseFloat(container.getAttribute('data-max-zoom'));
+    if (!isNaN(minZoomAttr) && minZoomAttr > 0) {
+        controls.minDistance = minZoomAttr;
+    }
+    if (!isNaN(maxZoomAttr) && maxZoomAttr > 0) {
+        controls.maxDistance = maxZoomAttr;
+    }
+
     // Lights
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444);
     hemiLight.position.set(0, 200, 0);
@@ -76,12 +108,20 @@ function initAssetViewer(container) {
     });
     
     // Animation loop
-    (function animate() {
-        requestAnimationFrame(animate);
-        // Update controls for smooth interaction
+    // Animation loop
+    function animate() {
+        container._feebasAnimationId = requestAnimationFrame(animate);
+        const gl = renderer.getContext();
+        if (gl.isContextLost()) {
+            console.warn('Asset Viewer: WebGL context lost, stopping animation loop');
+            cancelAnimationFrame(container._feebasAnimationId);
+            delete container._feebasAnimationId;
+            return;
+        }
         controls.update();
         renderer.render(scene, camera);
-    })();
+    }
+    animate();
 }
 
 // Fix: Properly wait for Elementor frontend to be initialized
