@@ -39,6 +39,14 @@ add_filter( 'wp_check_filetype_and_ext', function( $data, $file, $filename, $mim
     return $data;
 }, 10, 4 );
 
+function feebas_show_all_mime_types($query) {
+    if (isset($query['post_type']) && $query['post_type'] === 'attachment') {
+        unset($query['post_mime_type']);
+    }
+    return $query;
+}
+add_filter('ajax_query_attachments_args', 'feebas_show_all_mime_types');
+
 // Register simple Elementor widget.
 function feebas_register_simple_widget() {
     // Include and register the simple widget
