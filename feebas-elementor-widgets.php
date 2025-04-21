@@ -64,6 +64,15 @@ function feebas_register_widget_scripts() {
         null,
         true
     );
+    // Register and enqueue the horizontal cards editor script for dynamic controls
+    // Register the horizontal cards editor script (enqueued below)
+    wp_register_script(
+        'feebas-horizontal-cards',
+        plugin_dir_url( __FILE__ ) . 'widgets/js/horizontal-cards.js',
+        array( 'jquery' ),
+        null,
+        true
+    );
 }
 add_action( 'elementor/frontend/after_register_scripts', 'feebas_register_widget_scripts' );
 add_action( 'elementor/editor/after_enqueue_scripts', 'feebas_register_widget_scripts' );
@@ -84,3 +93,39 @@ function feebas_asset_viewer_module_tag( $tag, $handle, $src ) {
     }
     return $tag;
 }
+
+// AJAX handler to provide posts for the Horizontal Cards widget select control
+add_action( 'wp_ajax_feebas_get_posts_by_type', 'feebas_get_posts_by_type' );
+/**
+ * AJAX callback: fetch posts based on selected post type and return option list.
+ */
+function feebas_get_posts_by_type() {
+    $post_type = isset( $_POST['post_type'] ) ? sanitize_text_field( wp_unslash( $_POST['post_type'] ) ) : '';
+    if ( ! post_type_exists( $post_type ) ) {
+        wp_send_json_error();
+    }
+    $posts = get_posts( array(
+        'post_type'      => $post_type,
+        'posts_per_page' => -1,
+    ) );
+    $options = array();
+    foreach ( $posts as $post ) {
+        $options[ $post->ID ] = get_the_title( $post );
+    }
+    wp_send_json_success( $options );
+}
+/**
+ * Enqueue and localize Horizontal Cards editor script.
+ */
+function feebas_enqueue_horizontal_cards_script() {
+    wp_enqueue_script( 'feebas-horizontal-cards' );
+    wp_localize_script(
+        'feebas-horizontal-cards',
+        'FeebasHorizontalCardsSettings',
+        array(
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+            'nonce'    => wp_create_nonce('feebas_widget_nonce')
+        )
+    );
+}
+add_action( 'elementor/editor/after_enqueue_scripts', 'feebas_enqueue_horizontal_cards_script' );
