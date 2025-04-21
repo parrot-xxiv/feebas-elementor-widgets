@@ -61,7 +61,92 @@ class Feebas_Asset_Viewer_Widget extends \Elementor\Widget_Base {
                 'default' => 400,
             ]
         );
+        // Zoom distance limits: minimum and maximum
+        $this->add_control(
+            'min_zoom',
+            [
+                'label'       => __( 'Minimum Zoom Distance', 'feebas-elementor-widgets' ),
+                'type'        => Controls_Manager::NUMBER,
+                'default'     => 0,
+                'description' => __( 'Minimum distance camera can zoom (0 = no limit).', 'feebas-elementor-widgets' ),
+            ]
+        );
+        $this->add_control(
+            'max_zoom',
+            [
+                'label'       => __( 'Maximum Zoom Distance', 'feebas-elementor-widgets' ),
+                'type'        => Controls_Manager::NUMBER,
+                'default'     => 0,
+                'description' => __( 'Maximum distance camera can zoom out (0 = no limit).', 'feebas-elementor-widgets' ),
+            ]
+        );
 
+        // Auto-rotate options
+        $this->add_control(
+            'auto_rotate',
+            [
+                'label'        => __( 'Auto Rotate', 'feebas-elementor-widgets' ),
+                'type'         => Controls_Manager::SWITCHER,
+                'label_on'     => __( 'Yes', 'feebas-elementor-widgets' ),
+                'label_off'    => __( 'No', 'feebas-elementor-widgets' ),
+                'return_value' => 'yes',
+                'default'      => 'no',
+            ]
+        );
+        $this->add_control(
+            'auto_rotate_x',
+            [
+                'label'        => __( 'Rotate X Axis', 'feebas-elementor-widgets' ),
+                'type'         => Controls_Manager::SWITCHER,
+                'label_on'     => __( 'Yes', 'feebas-elementor-widgets' ),
+                'label_off'    => __( 'No', 'feebas-elementor-widgets' ),
+                'return_value' => 'yes',
+                'default'      => 'no',
+                'condition'    => [
+                    'auto_rotate' => 'yes',
+                ],
+            ]
+        );
+        $this->add_control(
+            'auto_rotate_y',
+            [
+                'label'        => __( 'Rotate Y Axis', 'feebas-elementor-widgets' ),
+                'type'         => Controls_Manager::SWITCHER,
+                'label_on'     => __( 'Yes', 'feebas-elementor-widgets' ),
+                'label_off'    => __( 'No', 'feebas-elementor-widgets' ),
+                'return_value' => 'yes',
+                'default'      => 'no',
+                'condition'    => [
+                    'auto_rotate' => 'yes',
+                ],
+            ]
+        );
+        $this->add_control(
+            'auto_rotate_z',
+            [
+                'label'        => __( 'Rotate Z Axis', 'feebas-elementor-widgets' ),
+                'type'         => Controls_Manager::SWITCHER,
+                'label_on'     => __( 'Yes', 'feebas-elementor-widgets' ),
+                'label_off'    => __( 'No', 'feebas-elementor-widgets' ),
+                'return_value' => 'yes',
+                'default'      => 'no',
+                'condition'    => [
+                    'auto_rotate' => 'yes',
+                ],
+            ]
+        );
+        $this->add_control(
+            'auto_rotate_speed',
+            [
+                'label'       => __( 'Auto Rotate Speed (deg/s)', 'feebas-elementor-widgets' ),
+                'type'        => Controls_Manager::NUMBER,
+                'default'     => 30,
+                'description' => __( 'Rotation speed in degrees per second.', 'feebas-elementor-widgets' ),
+                'condition'   => [
+                    'auto_rotate' => 'yes',
+                ],
+            ]
+        );
         $this->end_controls_section();
     }
 
@@ -75,6 +160,15 @@ class Feebas_Asset_Viewer_Widget extends \Elementor\Widget_Base {
         $this->add_render_attribute( 'container', 'id', $container_id );
         $this->add_render_attribute( 'container', 'class', 'feebas-asset-viewer-container' );
         $this->add_render_attribute( 'container', 'data-asset-url', esc_url( $settings['asset']['url'] ) );
+        // Pass zoom distance limits to viewer (0 = no limit)
+        $this->add_render_attribute( 'container', 'data-min-zoom', floatval( $settings['min_zoom'] ) );
+        $this->add_render_attribute( 'container', 'data-max-zoom', floatval( $settings['max_zoom'] ) );
+        // Pass auto-rotate options
+        $this->add_render_attribute( 'container', 'data-auto-rotate', $settings['auto_rotate'] === 'yes' ? 'true' : 'false' );
+        $this->add_render_attribute( 'container', 'data-auto-rotate-x', $settings['auto_rotate_x'] === 'yes' ? 'true' : 'false' );
+        $this->add_render_attribute( 'container', 'data-auto-rotate-y', $settings['auto_rotate_y'] === 'yes' ? 'true' : 'false' );
+        $this->add_render_attribute( 'container', 'data-auto-rotate-z', $settings['auto_rotate_z'] === 'yes' ? 'true' : 'false' );
+        $this->add_render_attribute( 'container', 'data-auto-rotate-speed', floatval( $settings['auto_rotate_speed'] ) );
         $height = intval( $settings['height'] );
         ?>
         <div <?php echo $this->get_render_attribute_string( 'container' ); ?> style="width:100%; height:<?php echo $height; ?>px;"></div>
