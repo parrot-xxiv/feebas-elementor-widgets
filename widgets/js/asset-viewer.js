@@ -61,6 +61,17 @@ function initAssetViewer(container) {
     if (!isNaN(maxZoomAttr) && maxZoomAttr > 0) {
         controls.maxDistance = maxZoomAttr;
     }
+    // Auto-rotate options
+    let currentModel = null;
+    let prevTime = performance.now();
+    const autoRotate = container.getAttribute('data-auto-rotate') === 'true';
+    const autoRotateX = container.getAttribute('data-auto-rotate-x') === 'true';
+    const autoRotateY = container.getAttribute('data-auto-rotate-y') === 'true';
+    const autoRotateZ = container.getAttribute('data-auto-rotate-z') === 'true';
+    const speedDeg = parseFloat(container.getAttribute('data-auto-rotate-speed'));
+    const autoRotateSpeed = (!isNaN(speedDeg) ? speedDeg : 0) * Math.PI / 180;
+    // Disable orbit controls if auto-rotate is enabled
+    controls.enabled = !autoRotate;
 
     // Lights
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444);
@@ -77,6 +88,7 @@ function initAssetViewer(container) {
         assetUrl,
         gltf => {
             const model = gltf.scene;
+            currentModel = model;
             scene.add(model);
             // Center model
             const box = new THREE.Box3().setFromObject(model);
@@ -108,7 +120,6 @@ function initAssetViewer(container) {
     });
     
     // Animation loop
-    // Animation loop
     function animate() {
         container._feebasAnimationId = requestAnimationFrame(animate);
         const gl = renderer.getContext();
@@ -118,7 +129,16 @@ function initAssetViewer(container) {
             delete container._feebasAnimationId;
             return;
         }
-        controls.update();
+        const currentTime = performance.now();
+        const delta = (currentTime - prevTime) / 1000;
+        prevTime = currentTime;
+        if (autoRotate && currentModel) {
+            if (autoRotateX) currentModel.rotation.x += autoRotateSpeed * delta;
+            if (autoRotateY) currentModel.rotation.y += autoRotateSpeed * delta;
+            if (autoRotateZ) currentModel.rotation.z += autoRotateSpeed * delta;
+        } else {
+            controls.update();
+        }
         renderer.render(scene, camera);
     }
     animate();
