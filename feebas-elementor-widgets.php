@@ -50,6 +50,9 @@ function feebas_register_widgets() {
     // Include and register the Horizontal Cards widget
     require_once plugin_dir_path( __FILE__ ) . 'widgets/class-feebas-horizontal-cards-widget.php';
     \Elementor\Plugin::instance()->widgets_manager->register_widget_type( new \Feebas_Horizontal_Cards_Widget() );
+    // 
+    require_once plugin_dir_path( __FILE__ ) . 'widgets/class-feebas-swiper-widget.php';
+    \Elementor\Plugin::instance()->widgets_manager->register_widget_type( new \Feebas_Swiper_Widget() );
 }
 add_action( 'elementor/widgets/widgets_registered', 'feebas_register_widgets' );
 // Register and enqueue scripts for the 3D Asset Viewer widget
@@ -72,6 +75,13 @@ function feebas_register_widget_scripts() {
         array( 'jquery' ),
         null,
         true
+    );
+    // Register stylesheet for Tailwind CSS
+    wp_register_style(
+        'feebas-tailwind-css',
+        plugin_dir_url( __FILE__ ) . 'widgets/css/style.css',
+        array(),
+        null
     );
 }
 add_action( 'elementor/frontend/after_register_scripts', 'feebas_register_widget_scripts' );
@@ -129,3 +139,12 @@ function feebas_enqueue_horizontal_cards_script() {
     );
 }
 add_action( 'elementor/editor/after_enqueue_scripts', 'feebas_enqueue_horizontal_cards_script' );
+
+add_action('wp_head', function(){
+    ?>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <?php
+})
+
+?>
