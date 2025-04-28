@@ -77,6 +77,7 @@ class Feebas_Swiper_Widget extends \Elementor\Widget_Base
         $settings = $this->get_settings_for_display();
         $selected_post_ids = $settings['selected_cameras'];
         $post_type = 'camera'; // Get the selected post type
+        $widget_id = $this->get_id();
 
         $posts = []; // Initialize $posts as an empty array
 
@@ -113,36 +114,42 @@ class Feebas_Swiper_Widget extends \Elementor\Widget_Base
         }
 
 ?>
-
-        <style>
-            .swiper {
-                width: 600px;
-                height: 300px;
-            }
-        </style>
-        <div class="swiper bg-red-200">
+        <div class="swiper swiper-<?php echo $widget_id; ?>">
             <!-- Additional required wrapper -->
-            <div class="swiper-wrapper bg-green-200">
+            <div class="swiper-wrapper">
                 <!-- Slides -->
-                <div class="swiper-slide w-96 bg-blue-200">Slide 1</div>
-                <div class="swiper-slide w-96 bg-blue-200">Slide 2</div>
-                <div class="swiper-slide w-96 bg-blue-200">Slide 3</div>
-                ...
+                <?php foreach ($posts as $post): ?>
+                    <div class="swiper-slide">
+                        <div class="flex bg-black/90 space-x-5 text-white p-5 rounded ">
+                            <div class="rounded">
+                                <img class="w-[300px]" src="https://placehold.co/600x400">
+                            </div>
+                            <div class="flex flex-col">
+                                <h3 class="font-semibold text-4xl"><?php echo esc_html(get_the_title($post)); ?></h3>
+                                <p class="mb-auto mt-5">description</p>
+                                <button class="px-3 py-2 rounded bg-orange-400 text-white">book now</button>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
             </div>
             <!-- If we need navigation buttons -->
             <div class="swiper-button-prev"></div>
             <div class="swiper-button-next"></div>
-
         </div>
         <script>
-            const swiper = new Swiper('.swiper', {
+            const swiper<?php echo $widget_id; ?> = new Swiper('.swiper-<?php echo $widget_id; ?>', {
                 // Optional parameters
                 direction: 'horizontal',
                 centeredSlides: false,
                 spaceBetween: 30,
                 slidesPerView: 2,
                 grabCursor: true,
-                loop: true,
+                slidesOffsetBefore: 300,
+                mousewheel: {
+                    enabled: true,
+                    forceToAxis: true
+                },
                 // Navigation arrows
                 navigation: {
                     nextEl: '.swiper-button-next',
