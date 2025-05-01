@@ -41,18 +41,16 @@ function feebas_show_all_mime_types($query) {
 add_filter('ajax_query_attachments_args', 'feebas_show_all_mime_types');
 // Register simple Elementor widget.
 function feebas_register_widgets() {
-    // Include and register the simple widget
     require_once plugin_dir_path( __FILE__ ) . 'widgets/class-feebas-simple-widget.php';
     \Elementor\Plugin::instance()->widgets_manager->register_widget_type( new \Feebas_Simple_Widget() );
-    // Include and register the 3D Asset Viewer widget
     require_once plugin_dir_path( __FILE__ ) . 'widgets/class-feebas-asset-viewer-widget.php';
     \Elementor\Plugin::instance()->widgets_manager->register_widget_type( new \Feebas_Asset_Viewer_Widget() );
-    // Include and register the Horizontal Cards widget
     require_once plugin_dir_path( __FILE__ ) . 'widgets/class-feebas-horizontal-cards-widget.php';
     \Elementor\Plugin::instance()->widgets_manager->register_widget_type( new \Feebas_Horizontal_Cards_Widget() );
-    // 
     require_once plugin_dir_path( __FILE__ ) . 'widgets/class-feebas-swiper-widget.php';
     \Elementor\Plugin::instance()->widgets_manager->register_widget_type( new \Feebas_Swiper_Widget() );
+    require_once plugin_dir_path( __FILE__ ) . 'widgets/class-feebas-slider-builder-widget.php';
+    \Elementor\Plugin::instance()->widgets_manager->register_widget_type( new \Feebas_Slider_Builder_Widget() );
 }
 add_action( 'elementor/widgets/widgets_registered', 'feebas_register_widgets' );
 // Register and enqueue scripts for the 3D Asset Viewer widget
