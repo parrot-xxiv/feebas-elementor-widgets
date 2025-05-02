@@ -85,6 +85,32 @@ class Feebas_Horizontal_Cards_Widget extends \Elementor\Widget_Base
         );
 
         $this->end_controls_section();
+
+        $this->start_controls_section(
+            'additional_option',
+            [
+                'label' => __('Additional Options', 'feebas-elementor-widgets'),
+                'tab'   => Controls_Manager::TAB_CONTENT,
+            ]
+        );
+        $this->add_control(
+            'post_type',
+            [
+                'label'   => __('Select Post Type', 'feebas-elementor-widgets'),
+                'type'    => Controls_Manager::SELECT,
+                'options' => [
+					'' => esc_html__( 'Default', 'feebas-elementor-widgets' ),
+					'none' => esc_html__( 'None', 'feebas-elementor-widgets' ),
+					'solid'  => esc_html__( 'Solid', 'feebas-elementor-widgets' ),
+					'dashed' => esc_html__( 'Dashed', 'feebas-elementor-widgets' ),
+					'dotted' => esc_html__( 'Dotted', 'feebas-elementor-widgets' ),
+					'double' => esc_html__( 'Double', 'feebas-elementor-widgets' ),
+				],
+                'default' => ''
+            ]
+        );
+
+        $this->end_controls_section();
     }
 
     protected function render()
@@ -109,7 +135,6 @@ class Feebas_Horizontal_Cards_Widget extends \Elementor\Widget_Base
                     'ignore_sticky_posts' => 1 // Typically needed for custom queries
                 ]
             );
-
         } else {
             // Log or handle cases where selection might be invalid (optional)
             if (empty($post_type)) {
@@ -132,38 +157,27 @@ class Feebas_Horizontal_Cards_Widget extends \Elementor\Widget_Base
             return; // Exit rendering if no posts
         }
 
-        // Render horizontal cards container
-        // Using Elementor's wrapper method is slightly better practice
-        $this->add_render_attribute('wrapper', 'class', 'feebas-horizontal-cards');
-        $this->add_render_attribute('wrapper', 'style', 'display:flex; overflow-x:auto; gap:1rem;'); // Add inline styles if needed, or use CSS classes
+?>
 
-        echo '<div ' . $this->get_render_attribute_string('wrapper') . '>'; // Use render attribute
+        <div class="horizontal-card-container flex flex space-x-4 overflow-x-auto scroll-smooth snap-x snap-mandatory px-4 hide-scrollbar">
+            <?php foreach ($posts as $post): ?>
+                <div class="horizontal-card min-w-[200px] sm:min-w-[250px] md:min-w-[300px] snap-start bg-white rounded-lg shadow p-4 flex-shrink-0">
+                    <img src="https://placehold.co/600x400" class="min-w-[200px]" alt="Placeholder Image">
+                    <h2><?php echo esc_html(get_the_title($post)); ?></h2>
+                    <p>placeholder description</p>
+                </div>
+            <?php endforeach; ?>
+        </div>
 
-        foreach ($posts as $selected_post) { // Use a different variable name like $post_object to avoid conflict with global $post
-
-            // Get data directly from the $post_object
-            $title = get_the_title($selected_post); // Pass object or ID
-            $permalink = get_permalink($selected_post); // Pass object or ID
-
-            // Add unique class/ID per card if needed
-            $card_key = 'card-' . $selected_post->ID;
-            $this->add_render_attribute($card_key, 'class', 'feebas-card');
-            $this->add_render_attribute($card_key, 'style', 'flex:0 0 auto; width:250px;'); // Example inline style
-
-            echo '<div ' . $this->get_render_attribute_string($card_key) . '>';
-            echo '<a href="' . esc_url($permalink) . '" style="text-decoration:none; color:inherit;">'; // Consider moving styles to CSS
-
-            // Placeholder
-            echo '<img src="https://placehold.co/600x400" alt="" style="width:100%; height: 150px; background-color: #eee;">';
-
-            echo '<h3 style="margin:0.5em 0;">' . esc_html($title) . '</h3>'; // Style via CSS preferably
-
-            echo '<p>' . esc_html__('No description available.', 'feebas-elementor-widgets') . '</p>'; // Placeholder
-
-            echo '</a>';
-            echo '</div>'; // End feebas-card
-        }
-
-        echo '</div>'; 
+<?php
+    }
+    /**
+     * Specify frontend style dependencies.
+     *
+     * @return string[]
+     */
+    public function get_style_depends()
+    {
+        return ['feebas-tailwind-css'];
     }
 }
