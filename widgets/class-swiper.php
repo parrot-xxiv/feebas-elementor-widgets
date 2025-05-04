@@ -39,11 +39,6 @@ class Feebas_Swiper_Widget extends Widget_Base
         return ['feebas-tailwind-css'];
     }
 
-    public function get_script_depends(): array
-    {
-        return ['swiper'];
-    }
-
     protected function _register_controls()
     {
         $this->start_controls_section(
@@ -78,7 +73,122 @@ class Feebas_Swiper_Widget extends Widget_Base
             ]
         );
 
+        $this->add_control(
+            'select_display',
+            [
+                'label'       => __('Select Display', 'feebas-elementor-widgets'),
+                'type'        => Controls_Manager::SELECT,
+                'options'     => [
+                    'template_1' => esc_html__('Template 1'),
+                    'template_2' => esc_html__('Template 2'),
+                ],
+                'default' => 'template_1',
+                'multiple'    => true,
+                'label_block' => true,
+                'description' => __('Choose how the items are displayed', 'feebas-elementor-widgets'),
+            ]
+        );
+
+        $this->add_responsive_control(
+            'offset_before',
+            [
+                'type' => Controls_Manager::SLIDER,
+                'label' => esc_html__('Offset Before', 'feebas-elementor-widgets'),
+                'size_units' => ['px'],
+                'range' => [
+                    'px' => [
+                        'min' => 0,
+                        'max' => 500,
+                        'step' => 10,
+                    ],
+                ],
+                'default' => [
+                    'size' => 300,
+                    'unit' => 'px',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'slides_per_view',
+            [
+                'type' => Controls_Manager::NUMBER,
+                'label' => esc_html__('Slides per view', 'feebas-elementor-widgets'),
+                'min' => 1,
+                'max' => 20,
+                'step' => 1,
+                'default' => 3
+            ]
+        );
+
+        $this->add_responsive_control(
+            'image_height',
+            [
+                'label' => esc_html__('Image Height', 'feebas-elementor-widgets'),
+                'type'  => \Elementor\Controls_Manager::SLIDER,
+                'range' => [
+                    'px' => [
+                        'min' => 50,
+                        'max' => 1000,
+                        'step' => 1,
+                    ],
+                ],
+                'default' => [
+                    'size' => 250,
+                    'unit' => 'px',
+                ],
+                'size_units' => ['px'],
+                'selectors' => [
+                    '{{WRAPPER}} .swiper-card-image' => 'height: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'card_height',
+            [
+                'label' => esc_html__('Card Height', 'feebas-elementor-widgets'),
+                'type'  => \Elementor\Controls_Manager::SLIDER,
+                'range' => [
+                    'px' => [
+                        'min' => 50,
+                        'max' => 1000,
+                        'step' => 1,
+                    ],
+                ],
+                'default' => [
+                    'size' => 250,
+                    'unit' => 'px',
+                ],
+                'size_units' => ['px'],
+                'selectors' => [
+                    '{{WRAPPER}} .template-1' => 'height: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
         $this->end_controls_section();
+    }
+
+    private function get_responsive_setting($setting_key, $default = '', $is_slider = true)
+    {
+        $settings = $this->get_settings_for_display();
+        $value = [];
+
+        // For slider controls
+        if ($is_slider) {
+            $value['desktop'] = isset($settings[$setting_key]['size']) ? $settings[$setting_key]['size'] : $default;
+            $value['tablet'] = isset($settings[$setting_key . '_tablet']['size']) ? $settings[$setting_key . '_tablet']['size'] : $value['desktop'];
+            $value['mobile'] = isset($settings[$setting_key . '_mobile']['size']) ? $settings[$setting_key . '_mobile']['size'] : $value['tablet'];
+        }
+        // For number controls
+        else {
+            $value['desktop'] = isset($settings[$setting_key]) ? $settings[$setting_key] : $default;
+            $value['tablet'] = isset($settings[$setting_key . '_tablet']) ? $settings[$setting_key . '_tablet'] : $value['desktop'];
+            $value['mobile'] = isset($settings[$setting_key . '_mobile']) ? $settings[$setting_key . '_mobile'] : $value['tablet'];
+        }
+
+        return $value;
     }
 
     private function get_cameras(array $selected_ids): array
@@ -99,14 +209,12 @@ class Feebas_Swiper_Widget extends Widget_Base
     protected function render()
     {
         $settings = $this->get_settings_for_display();
+        $template = $settings['select_display'];
         $selected_ids = is_array($settings['selected_cameras']) ? array_map('absint', $settings['selected_cameras']) : [];
+        $offset_values = $this->get_responsive_setting('offset_before', 300, true);
+        $slides_per_view = $this->get_responsive_setting('slides_per_view', 3, false);
 
-        if (empty($selected_ids)) {
-            echo '<p>' . esc_html__('No cameras selected.', 'feebas-elementor-widgets') . '</p>';
-            return;
-        }
-
-        $posts = $this->get_cameras($selected_ids); 
+        $posts = $this->get_cameras($selected_ids);
 
         if (empty($posts)) {
             echo '<p>' . esc_html__('Selected cameras not found.', 'feebas-elementor-widgets') . '</p>';
@@ -117,20 +225,44 @@ class Feebas_Swiper_Widget extends Widget_Base
 ?>
         <div class="swiper swiper-<?php echo $widget_id; ?>">
             <div class="swiper-wrapper">
-                <?php foreach ($posts as $post) : ?>
-                    <div class="swiper-slide">
-                        <div class="flex bg-[#151515] space-x-5 text-white p-5 rounded">
-                            <div class="flex flex-col">
-                                <h3 class="font-semibold text-4xl"><?php echo esc_html(get_the_title($post)); ?></h3>
-                                <p class="mt-5 mb-auto"><?php echo esc_html(get_the_excerpt($post)); ?></p>
-                                <a href="<?php echo esc_url(get_permalink($post)); ?>" class="px-3 py-2 rounded bg-orange-400 text-white">
-                                    <?php esc_html_e('Book now', 'feebas-elementor-widgets'); ?>
+                <?php foreach ($posts as $post) :
+                    $image_id = get_post_meta($post->ID, '_camera_image', true);
+                    $image_url = wp_get_attachment_image_url($image_id, 'medium'); // or 'medium', 'thumbnail', etc.
+                    $placeholder = "https://placehold.co/600x400";
+                    echo '<div class="swiper-slide">';
+                    switch ($template) {
+                        case 'template_2':
+                ?>
+                            <div class="flex flex-col items-center text-white">
+                                <img
+                                    src="<?php echo esc_url($image_url ? $image_url : $placeholder); ?>"
+                                    alt="<?php echo esc_html(get_the_title($post)) ?> "
+                                    class="w-full object-center object-cover swiper-card-image">
+                                    <!-- style="height:200px;"> -->
+                                <a href="<?php echo esc_url(get_permalink($post)); ?>">
+                                    <h2 class="text-3xl font-bold mb-4"><?php echo esc_html(get_the_title($post)); ?> </h2>
                                 </a>
                             </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
+                        <?php
+                            break;
+
+                        case 'template_1':
+                        default:
+                        ?>
+                            <div class="flex bg-[#151515] text-white template-1">
+                                <img
+                                    style="height:200px"
+                                    src="<?php echo esc_url($image_url ? $image_url : $placeholder); ?>"
+                                    alt="<?php echo esc_html(get_the_title($post)) ?> ">
+                                <a href="<?php echo esc_url(get_permalink($post)); ?>">
+                                    <h2 class="text-3xl font-bold mb-4"><?php echo esc_html(get_the_title($post)); ?> </h2>
+                                </a>
+                            </div>
+                            <?php break; ?>
+                    <?php } ?>
+            </div> <!--.swiper-slide -->
+        <?php endforeach; ?>
+        </div>
         </div>
         <script>
             (function() {
@@ -139,13 +271,23 @@ class Feebas_Swiper_Widget extends Widget_Base
                     direction: 'horizontal',
                     centeredSlides: false,
                     spaceBetween: 30,
-                    slidesPerView: 2,
                     grabCursor: true,
-                    slidesOffsetBefore: 300,
+                    slidesPerView: <?php echo intval($slides_per_view['mobile']) ?>,
+                    slidesOffsetBefore: <?php echo intval($offset_values['mobile']) ?>,
                     mousewheel: {
                         enabled: true,
                         forceToAxis: true
                     },
+                    breakpoints: {
+                        768: {
+                            slidesOffsetBefore: <?php echo intval($offset_values['tablet']) ?>,
+                            slidesPerView: <?php echo intval($slides_per_view['tablet']) ?>
+                        },
+                        1024: {
+                            slidesOffsetBefore: <?php echo intval($offset_values['desktop']) ?>,
+                            slidesPerView: <?php echo intval($slides_per_view['desktop']) ?>
+                        }
+                    }
                 });
             })();
         </script>
